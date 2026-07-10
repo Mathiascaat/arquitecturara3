@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Procesador — Presentación Animada</title>
+    <style>
+        :root {
+            --bg: #070b14;
+            --bg2: #0c1322;
+            --card: #101a2e;
+            --line: rgba(255, 255, 255, .09);
+            --txt: #e8eefc;
+            --muted: #93a0b8;
+            --acc: #ff7a18;
+            --acc2: #3b82f6;
+            --ok: #22c55e;
+            --warn: #eab308;
+            --bad: #ef4444;
+            --if: #3b82f6;
+            --id: #8b5cf6;
+            --ex: #ff7a18;
+            --mem: #22c55e;
+            --wb: #ec4899;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: radial-gradient(1200px 700px at 80% -10%, rgba(59, 130, 246, .16), transparent 60%),
+                radial-gradient(900px 600px at 5% 110%, rgba(255, 122, 24, .12), transparent 60%), var(--bg);
+            color: var(--txt);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ===== deck ===== */
+        .deck { height: 100vh; position: relative; }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 56px 60px 92px;
+            opacity: 0;
+            transform: translateX(60px) scale(.98);
+            transition: opacity .55s ease, transform .55s cubic-bezier(.2, .8, .2, 1);
+            pointer-events: none;
+            overflow-y: auto;
+        }
+
+        .slide.active { opacity: 1; transform: none; pointer-events: auto; }
+        .slide.prev { transform: translateX(-60px) scale(.98); }
+
+        .eyebrow {
+            display: inline-block;
+            font-size: 12px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 800;
+            color: var(--acc);
+            border: 1px solid rgba(255, 122, 24, .4);
+            border-radius: 999px;
+            padding: 6px 16px;
+            margin-bottom: 18px;
+            background: rgba(255, 122, 24, .08);
+        }
+
+        h1 { font-size: clamp(34px, 5vw, 62px); text-align: center; line-height: 1.1; }
+        h2 { font-size: clamp(24px, 3.4vw, 40px); margin-bottom: 8px; text-align: center; }
+
+        .sub { color: var(--muted); font-size: clamp(14px, 1.6vw, 18px); text-align: center; max-width: 760px; margin-top: 10px; }
+
+        .grad { background: linear-gradient(90deg, var(--acc), #ffb56b, var(--acc2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+        /* entrance stagger */
+        .slide .in { opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s cubic-bezier(.2, .8, .2, 1); }
+        .slide.active .in { opacity: 1; transform: none; }
+        .slide.active .in:nth-child(1) { transition-delay: .05s }
+        .slide.active .in:nth-child(2) { transition-delay: .15s }
+        .slide.active .in:nth-child(3) { transition-delay: .25s }
+        .slide.active .in:nth-child(4) { transition-delay: .35s }
+        .slide.active .in:nth-child(5) { transition-delay: .45s }
+        .slide.active .in:nth-child(6) { transition-delay: .55s }
+
+        /* ===== nav ===== */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 22px;
+            background: rgba(7, 11, 20, .8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--line);
+            z-index: 50;
+        }
+
+        .nav-btn {
+            background: var(--card);
+            color: var(--txt);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px 22px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .nav-btn:hover { border-color: var(--acc); transform: translateY(-2px); }
+        .nav-btn.primary { background: linear-gradient(120deg, var(--acc), #ff9a4d); color: #1a0d00; border: none; }
+
+        .dots { display: flex; gap: 8px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, .18); cursor: pointer; transition: .25s; }
+        .dot.on { background: var(--acc); transform: scale(1.35); box-shadow: 0 0 12px rgba(255, 122, 24, .7); }
+
+        .counter { font-size: 13px; color: var(--muted); font-weight: 700; min-width: 54px; text-align: center; }
+
+        .hint { position: fixed; top: 14px; right: 20px; font-size: 12px; color: var(--muted); z-index: 50; }
+        kbd { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; font-family: monospace; }
+
+        /* ===== cards ===== */
+        .grid { display: grid; gap: 18px; width: 100%; max-width: 1050px; margin-top: 30px; }
+        .grid.c2 { grid-template-columns: repeat(2, 1fr); }
+        .grid.c3 { grid-template-columns: repeat(3, 1fr); }
+        .grid.c4 { grid-template-columns: repeat(4, 1fr); }
+
+        .card {
+            background: linear-gradient(160deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .015));
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 22px;
+            transition: .25s;
+        }
+
+        .card:hover { transform: translateY(-5px); border-color: rgba(255, 122, 24, .5); box-shadow: 0 18px 40px rgba(0, 0, 0, .45); }
+        .card .ico { font-size: 30px; margin-bottom: 10px; }
+        .card h3 { font-size: 17px; margin-bottom: 7px; }
+        .card p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+
+        /* ===== chip portada ===== */
+        .chip-wrap { margin: 34px 0 8px; position: relative; }
+        .chip-wrap svg { filter: drop-shadow(0 0 26px rgba(255, 122, 24, .35)); }
+        .core { animation: corePulse 2.2s ease-in-out infinite; transform-origin: center; }
+        .core:nth-child(2) { animation-delay: .3s } .core:nth-child(3) { animation-delay: .6s } .core:nth-child(4) { animation-delay: .9s }
+        @keyframes corePulse { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
+        .pin { animation: pinGlow 3s linear infinite; }
+        @keyframes pinGlow { 0%, 100% { opacity: .3 } 50% { opacity: .9 } }
+
+        /* ===== datapath SVG ===== */
+        .dp-wrap { width: 100%; max-width: 1020px; margin-top: 20px; background: var(--bg2); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+        .dp-box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; rx: 12; }
+        .dp-box.hot { stroke: var(--acc); stroke-width: 2.5; filter: drop-shadow(0 0 10px rgba(255, 122, 24, .6)); }
+        .dp-label { fill: var(--txt); font-size: 14px; font-weight: 700; text-anchor: middle; }
+        .dp-sub { fill: var(--muted); font-size: 10.5px; text-anchor: middle; }
+        .dp-wire { stroke: rgba(255, 255, 255, .22); stroke-width: 2; fill: none; }
+        .dp-pulse { fill: var(--acc); filter: drop-shadow(0 0 8px var(--acc)); }
+        .dp-pulse.blue { fill: var(--acc2); filter: drop-shadow(0 0 8px var(--acc2)); }
+        .stage-tag { font-size: 12px; font-weight: 800; text-anchor: middle; }
+
+        .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 16px; font-size: 13px; color: var(--muted); }
+        .legend b { color: var(--txt); }
+        .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 4px; margin-right: 6px; vertical-align: -1px; }
+
+        /* ===== ciclo ===== */
+        .cycle-wrap { display: flex; gap: 40px; align-items: center; margin-top: 26px; flex-wrap: wrap; justify-content: center; }
+        .cycle-ring { position: relative; width: 320px; height: 320px; }
+        .cycle-step {
+            position: absolute;
+            width: 128px;
+            padding: 14px 10px;
+            border-radius: 16px;
+            background: var(--card);
+            border: 2px solid var(--line);
+            text-align: center;
+            font-weight: 800;
+            font-size: 14px;
+            transition: .4s;
+        }
+        .cycle-step small { display: block; font-weight: 500; color: var(--muted); font-size: 11px; margin-top: 4px; }
+        .cycle-step.on { border-color: var(--acc); background: rgba(255, 122, 24, .14); transform: scale(1.08); box-shadow: 0 0 24px rgba(255, 122, 24, .35); }
+        .cs1 { top: 0; left: 50%; transform: translateX(-50%); }
+        .cs1.on { transform: translateX(-50%) scale(1.08); }
+        .cs2 { top: 50%; right: 0; transform: translateY(-50%); }
+        .cs2.on { transform: translateY(-50%) scale(1.08); }
+        .cs3 { bottom: 0; left: 50%; transform: translateX(-50%); }
+        .cs3.on { transform: translateX(-50%) scale(1.08); }
+        .cs4 { top: 50%; left: 0; transform: translateY(-50%); }
+        .cs4.on { transform: translateY(-50%) scale(1.08); }
+        .cycle-center {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 92px; height: 92px; border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #ffb56b, var(--acc));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; color: #1a0d00; font-size: 13px; text-align: center;
+            animation: spinGlow 3s linear infinite;
+        }
+        @keyframes spinGlow { 0%, 100% { box-shadow: 0 0 20px rgba(255, 122, 24, .5) } 50% { box-shadow: 0 0 42px rgba(255, 122, 24, .85) } }
+
+        .cycle-info { max-width: 360px; background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 22px; min-height: 150px; }
+        .cycle-info h3 { color: var(--acc); margin-bottom: 8px; font-size: 18px; }
+        .cycle-info p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+        /* ===== pipeline ===== */
+        .pipe-controls { display: flex; gap: 12px; margin: 18px 0 8px; align-items: center; }
+        .play-btn {
+            background: linear-gradient(120deg, var(--acc), #ff9a4d);
+            color: #1a0d00; border: none; border-radius: 12px;
+            padding: 10px 24px; font-size: 15px; font-weight: 800; cursor: pointer; transition: .2s;
+        }
+        .play-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(255, 122, 24, .4); }
+        .play-btn.ghost { background: var(--card); color: var(--txt); border: 1px solid var(--line); }
+
+        .pipe-table { border-collapse: separate; border-spacing: 5px; margin-top: 10px; }
+        .pipe-table th { font-size: 12px; color: var(--muted); font-weight: 700; padding: 4px 6px; }
+        .pipe-table td.instr { font-family: 'Consolas', monospace; font-size: 13px; text-align: right; padding-right: 12px; color: var(--txt); white-space: nowrap; }
+        .cell {
+            width: 62px; height: 40px; border-radius: 9px;
+            background: rgba(255, 255, 255, .04); border: 1px solid var(--line);
+            text-align: center; font-size: 12px; font-weight: 800; color: transparent;
+            transition: .3s;
+        }
+        .cell.fill { color: #fff; transform: scale(1.04); border-color: transparent; }
+        .cell.IF { background: var(--if); box-shadow: 0 0 12px rgba(59, 130, 246, .5); }
+        .cell.ID { background: var(--id); box-shadow: 0 0 12px rgba(139, 92, 246, .5); }
+        .cell.EX { background: var(--ex); box-shadow: 0 0 12px rgba(255, 122, 24, .5); }
+        .cell.MEM { background: var(--mem); box-shadow: 0 0 12px rgba(34, 197, 94, .5); }
+        .cell.WB { background: var(--wb); box-shadow: 0 0 12px rgba(236, 72, 153, .5); }
+        .cell.BUB { background: repeating-linear-gradient(45deg, rgba(239,68,68,.35), rgba(239,68,68,.35) 6px, rgba(239,68,68,.15) 6px, rgba(239,68,68,.15) 12px); color: #ffb4b4; }
+        .cycle-mark { color: var(--acc) !important; }
+
+        .pipe-msg { margin-top: 14px; font-size: 14px; color: var(--muted); min-height: 22px; text-align: center; }
+        .pipe-msg b { color: var(--acc); }
+
+        /* ===== barras rendimiento ===== */
+        .bars { width: 100%; max-width: 780px; margin-top: 30px; display: grid; gap: 22px; }
+        .bar-row { display: grid; grid-template-columns: 210px 1fr 90px; align-items: center; gap: 16px; }
+        .bar-row .lbl { font-weight: 800; font-size: 14.5px; text-align: right; }
+        .bar-row .lbl small { display: block; font-weight: 500; color: var(--muted); font-size: 11.5px; }
+        .bar-track { height: 30px; background: rgba(255, 255, 255, .05); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 0; border-radius: 999px; transition: width 1.4s cubic-bezier(.2, .8, .2, 1); }
+        .bar-val { font-weight: 900; font-size: 17px; color: var(--acc); opacity: 0; transition: opacity .5s .9s; }
+        .slide.active .bar-val { opacity: 1; }
+
+        .foot-note { margin-top: 26px; font-size: 13px; color: var(--muted); text-align: center; max-width: 700px; }
+
+        @media (max-width: 860px) {
+            .grid.c3, .grid.c4 { grid-template-columns: repeat(2, 1fr); }
+            .slide { padding: 40px 18px 100px; justify-content: flex-start; }
+            .cycle-ring { transform: scale(.82); }
+            .bar-row { grid-template-columns: 130px 1fr 70px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hint">Navega con <kbd>←</kbd> <kbd>→</kbd> o <kbd>Espacio</kbd></div>
+
+    <div class="deck" id="deck">
+
+        <!-- ===== 1. PORTADA ===== -->
+        <section class="slide">
+            <span class="eyebrow in">Arquitectura de Computadoras</span>
+            <h1 class="in">El <span class="grad">Procesador</span> por dentro</h1>
+            <p class="sub in">Rutas de datos · Pipeline · Técnicas de optimización</p>
+            <div class="chip-wrap in">
+                <svg width="260" height="260" viewBox="0 0 260 260">
+                    <g class="pin" stroke="#3b82f6" stroke-width="3">
+                        <line x1="60" y1="30" x2="60" y2="6" /><line x1="100" y1="30" x2="100" y2="6" />
+                        <line x1="140" y1="30" x2="140" y2="6" /><line x1="180" y1="30" x2="180" y2="6" />
+                        <line x1="60" y1="230" x2="60" y2="254" /><line x1="100" y1="230" x2="100" y2="254" />
+                        <line x1="140" y1="230" x2="140" y2="254" /><line x1="180" y1="230" x2="180" y2="254" />
+                        <line x1="30" y1="60" x2="6" y2="60" /><line x1="30" y1="100" x2="6" y2="100" />
+                        <line x1="30" y1="140" x2="6" y2="140" /><line x1="30" y1="180" x2="6" y2="180" />
+                        <line x1="230" y1="60" x2="254" y2="60" /><line x1="230" y1="100" x2="254" y2="100" />
+                        <line x1="230" y1="140" x2="254" y2="140" /><line x1="230" y1="180" x2="254" y2="180" />
+                    </g>
+                    <rect x="30" y="30" width="200" height="200" rx="22" fill="#101a2e" stroke="rgba(255,255,255,.18)" stroke-width="2" />
+                    <rect class="core" x="52" y="52" width="72" height="72" rx="10" fill="#ff7a18" />
+                    <rect class="core" x="136" y="52" width="72" height="72" rx="10" fill="#3b82f6" />
+                    <rect class="core" x="52" y="136" width="72" height="72" rx="10" fill="#8b5cf6" />
+                    <rect class="core" x="136" y="136" width="72" height="72" rx="10" fill="#22c55e" />
+                    <text x="130" y="134" text-anchor="middle" font-size="15" font-weight="900" fill="#fff">CPU</text>
+                </svg>
+            </div>
+            <p class="sub in">Una presentación animada e interactiva</p>
+        </section>
+
+        <!-- ===== 2. COMPONENTES ===== -->
+        <section class="slide">
+            <span class="eyebrow in">01 · Fundamentos</span>
+            <h2 class="in">¿Qué hay dentro de un procesador?</h2>
+            <p class="sub in">El CPU ejecuta instrucciones coordinando varios bloques funcionales.</p>
+            <div class="grid c4 in">
+                <div class="card"><div class="ico">🧮</div><h3>ALU</h3><p>Unidad Aritmético-Lógica: realiza sumas, restas, AND, OR, comparaciones y desplazamientos.</p></div>
+                <div class="card"><div class="ico">🎛️</div><h3>Unidad de Control</h3><p>Decodifica cada instrucción y genera las señales que gobiernan la ruta de datos.</p></div>
+                <div class="card"><div class="ico">📦</div><h3>Registros</h3><p>Memoria ultrarrápida dentro del chip (PC, IR, banco de registros de propósito general).</p></div>
+                <div class="card"><div class="ico">⚡</div><h3>Caché</h3><p>Niveles L1/L2/L3 que acercan datos e instrucciones para evitar esperar a la RAM.</p></div>
+            </div>
+            <div class="grid c3 in">
+                <div class="card"><div class="ico">⏱️</div><h3>Reloj</h3><p>Marca el ritmo: cada ciclo sincroniza las transferencias entre etapas (GHz = miles de millones de ciclos/s).</p></div>
+                <div class="card"><div class="ico">🚌</div><h3>Buses</h3><p>Caminos que transportan direcciones, datos y señales de control entre los bloques.</p></div>
+                <div class="card"><div class="ico">🔀</div><h3>Multiplexores</h3><p>Seleccionan qué dato entra a cada bloque según lo que ordena la unidad de control.</p></div>
+            </div>
+        </section>
+
+        <!-- ===== 3. RUTA DE DATOS ===== -->
+        <section class="slide" id="slideDatapath">
+            <span class="eyebrow in">02 · Ruta de datos</span>
+            <h2 class="in">La ruta de datos <span class="grad">(datapath)</span></h2>
+            <p class="sub in">Sigue el pulso naranja: es una instrucción viajando por el procesador.</p>
+            <div class="dp-wrap in">
+                <svg viewBox="0 0 980 300" width="100%">
+                    <!-- wires -->
+                    <path class="dp-wire" d="M120 150 H190" />
+                    <path class="dp-wire" d="M330 150 H400" />
+                    <path class="dp-wire" d="M540 150 H610" />
+                    <path class="dp-wire" d="M750 150 H820" />
+                    <path class="dp-wire" d="M890 190 V250 H60 V190" />
+                    <!-- boxes -->
+                    <g id="dpB1"><rect class="dp-box" x="20" y="110" width="100" height="80" rx="12" />
+                        <text class="dp-label" x="70" y="145">PC</text>
+                        <text class="dp-sub" x="70" y="165">Contador de</text><text class="dp-sub" x="70" y="178">programa</text></g>
+                    <g id="dpB2"><rect class="dp-box" x="190" y="110" width="140" height="80" rx="12" />
+                        <text class="dp-label" x="260" y="145">Memoria Instr.</text>
+                        <text class="dp-sub" x="260" y="165">lee la instrucción</text>
+                        <text class="stage-tag" x="260" y="100" fill="#3b82f6">IF · Fetch</text></g>
+                    <g id="dpB3"><rect class="dp-box" x="400" y="110" width="140" height="80" rx="12" />
+                        <text class="dp-label" x="470" y="145">Decodif. + Reg.</text>
+                        <text class="dp-sub" x="470" y="165">control y operandos</text>
+                        <text class="stage-tag" x="470" y="100" fill="#8b5cf6">ID · Decode</text></g>
+                    <g id="dpB4"><rect class="dp-box" x="610" y="110" width="140" height="80" rx="12" />
+                        <text class="dp-label" x="680" y="145">ALU</text>
+                        <text class="dp-sub" x="680" y="165">ejecuta la operación</text>
+                        <text class="stage-tag" x="680" y="100" fill="#ff7a18">EX · Execute</text></g>
+                    <g id="dpB5"><rect class="dp-box" x="820" y="110" width="140" height="80" rx="12" />
+                        <text class="dp-label" x="890" y="140">Mem. Datos</text>
+                        <text class="dp-sub" x="890" y="160">load / store</text>
+                        <text class="dp-sub" x="890" y="176">y Write-Back</text>
+                        <text class="stage-tag" x="890" y="100" fill="#22c55e">MEM · WB</text></g>
+                    <text class="dp-sub" x="490" y="272">← el resultado se escribe en los registros y el PC avanza a la siguiente instrucción</text>
+                    <!-- pulses -->
+                    <circle class="dp-pulse" r="7" id="pulse1" />
+                    <circle class="dp-pulse blue" r="5" id="pulse2" />
+                </svg>
+            </div>
+            <div class="legend in">
+                <span><span class="swatch" style="background:var(--if)"></span><b>IF</b> buscar</span>
+                <span><span class="swatch" style="background:var(--id)"></span><b>ID</b> decodificar</span>
+                <span><span class="swatch" style="background:var(--ex)"></span><b>EX</b> ejecutar</span>
+                <span><span class="swatch" style="background:var(--mem)"></span><b>MEM</b> acceder</span>
+                <span><span class="swatch" style="background:var(--wb)"></span><b>WB</b> escribir</span>
+            </div>
+        </section>
+
+        <!-- ===== 4. CICLO DE INSTRUCCIÓN ===== -->
+        <section class="slide" id="slideCycle">
+            <span class="eyebrow in">03 · Ciclo de instrucción</span>
+            <h2 class="in">Fetch → Decode → Execute → Write</h2>
+            <div class="cycle-wrap in">
+                <div class="cycle-ring">
+                    <div class="cycle-step cs1" data-i="0">📥 FETCH<small>buscar instrucción</small></div>
+                    <div class="cycle-step cs2" data-i="1">🔍 DECODE<small>interpretar</small></div>
+                    <div class="cycle-step cs3" data-i="2">⚙️ EXECUTE<small>calcular</small></div>
+                    <div class="cycle-step cs4" data-i="3">💾 WRITE<small>guardar resultado</small></div>
+                    <div class="cycle-center">ciclo<br>continuo</div>
+                </div>
+                <div class="cycle-info" id="cycleInfo">
+                    <h3>📥 FETCH</h3>
+                    <p>El PC apunta a la dirección de la siguiente instrucción. Se lee de la memoria (idealmente de la caché L1) y se carga en el registro de instrucción (IR).</p>
+                </div>
+            </div>
+            <p class="foot-note in">Un procesador moderno repite este ciclo miles de millones de veces por segundo. La pregunta clave: ¿hay que esperar a terminar una instrucción para empezar la siguiente?</p>
+        </section>
+
+        <!-- ===== 5. PIPELINE ===== -->
+        <section class="slide" id="slidePipe">
+            <span class="eyebrow in">04 · Pipeline</span>
+            <h2 class="in">Segmentación: la <span class="grad">línea de ensamblaje</span></h2>
+            <p class="sub in">Mientras una instrucción se ejecuta, la siguiente ya se está decodificando y otra se está buscando.</p>
+            <div class="pipe-controls in">
+                <button class="play-btn" id="pipePlay">▶ Animar pipeline</button>
+                <button class="play-btn ghost" id="pipeReset">↺ Reiniciar</button>
+            </div>
+            <table class="pipe-table in" id="pipeTable"></table>
+            <p class="pipe-msg" id="pipeMsg">Con pipeline de 5 etapas, en régimen estable se completa <b>1 instrucción por ciclo</b>.</p>
+        </section>
+
+        <!-- ===== 6. HAZARDS ===== -->
+        <section class="slide" id="slideHaz">
+            <span class="eyebrow in">05 · Riesgos (hazards)</span>
+            <h2 class="in">Cuando el pipeline se <span style="color:var(--bad)">atasca</span></h2>
+            <p class="sub in"><code style="color:var(--acc)">ADD R1,R2,R3</code> produce R1… pero <code style="color:var(--acc2)">SUB R4,R1,R5</code> lo necesita de inmediato.</p>
+            <div class="pipe-controls in">
+                <button class="play-btn" id="hazStall">▶ Sin optimizar (stall)</button>
+                <button class="play-btn ghost" id="hazFwd">⚡ Con forwarding</button>
+            </div>
+            <table class="pipe-table in" id="hazTable"></table>
+            <p class="pipe-msg" id="hazMsg">Elige un modo para animar el riesgo de datos.</p>
+            <div class="grid c3 in">
+                <div class="card"><div class="ico">🔗</div><h3>Riesgo de datos</h3><p>Una instrucción depende del resultado de otra que aún no termina.</p></div>
+                <div class="card"><div class="ico">🔀</div><h3>Riesgo de control</h3><p>Un salto condicional: no se sabe qué instrucción buscar hasta resolverlo.</p></div>
+                <div class="card"><div class="ico">🏗️</div><h3>Riesgo estructural</h3><p>Dos etapas necesitan el mismo recurso de hardware en el mismo ciclo.</p></div>
+            </div>
+        </section>
+
+        <!-- ===== 7. OPTIMIZACIONES ===== -->
+        <section class="slide">
+            <span class="eyebrow in">06 · Optimización</span>
+            <h2 class="in">Técnicas para ir <span class="grad">más rápido</span></h2>
+            <div class="grid c3 in">
+                <div class="card"><div class="ico">⚡</div><h3>Forwarding (adelantamiento)</h3><p>El resultado de la ALU se reenvía directo a la siguiente instrucción sin esperar al write-back. Elimina la mayoría de stalls por datos.</p></div>
+                <div class="card"><div class="ico">🔮</div><h3>Predicción de saltos</h3><p>El procesador "adivina" el destino de un salto con historial (predictores de 2 bits, TAGE). Los modernos aciertan &gt;95%.</p></div>
+                <div class="card"><div class="ico">🚀</div><h3>Superescalar</h3><p>Varias unidades de ejecución en paralelo: se emiten 2, 4 o más instrucciones por ciclo (IPC &gt; 1).</p></div>
+            </div>
+            <div class="grid c3 in">
+                <div class="card"><div class="ico">🔄</div><h3>Ejecución fuera de orden</h3><p>Reordena instrucciones independientes para no quedarse esperando; el retiro sigue siendo en orden (ROB).</p></div>
+                <div class="card"><div class="ico">📚</div><h3>Jerarquía de caché</h3><p>L1 (~4 ciclos), L2 (~12), L3 (~40) vs RAM (~200+). Explota la localidad temporal y espacial.</p></div>
+                <div class="card"><div class="ico">🧵</div><h3>Multithreading (SMT)</h3><p>Dos hilos comparten las unidades del núcleo: si uno se bloquea por memoria, el otro aprovecha los recursos.</p></div>
+            </div>
+        </section>
+
+        <!-- ===== 8. RENDIMIENTO ===== -->
+        <section class="slide" id="slidePerf">
+            <span class="eyebrow in">07 · Impacto</span>
+            <h2 class="in">¿Cuánto se gana?</h2>
+            <p class="sub in">Instrucciones completadas por ciclo (IPC) — escenario ilustrativo con 5 etapas.</p>
+            <div class="bars in">
+                <div class="bar-row">
+                    <div class="lbl">Sin pipeline<small>1 instrucción cada 5 ciclos</small></div>
+                    <div class="bar-track"><div class="bar-fill" data-w="20%" style="background:linear-gradient(90deg,#64748b,#94a3b8)"></div></div>
+                    <div class="bar-val">0.20</div>
+                </div>
+                <div class="bar-row">
+                    <div class="lbl">Pipeline con stalls<small>riesgos sin resolver</small></div>
+                    <div class="bar-track"><div class="bar-fill" data-w="55%" style="background:linear-gradient(90deg,#eab308,#facc15)"></div></div>
+                    <div class="bar-val">0.70</div>
+                </div>
+                <div class="bar-row">
+                    <div class="lbl">Pipeline + forwarding<small>+ predicción de saltos</small></div>
+                    <div class="bar-track"><div class="bar-fill" data-w="78%" style="background:linear-gradient(90deg,#ff7a18,#ffb56b)"></div></div>
+                    <div class="bar-val">~1.0</div>
+                </div>
+                <div class="bar-row">
+                    <div class="lbl">Superescalar 4-vías<small>+ fuera de orden</small></div>
+                    <div class="bar-track"><div class="bar-fill" data-w="100%" style="background:linear-gradient(90deg,#22c55e,#4ade80)"></div></div>
+                    <div class="bar-val">3–4+</div>
+                </div>
+            </div>
+            <p class="foot-note in">La aceleración ideal de un pipeline de k etapas es ×k, pero los riesgos, fallos de caché y saltos mal predichos la reducen. Por eso las optimizaciones importan tanto como el pipeline mismo.</p>
+        </section>
+
+        <!-- ===== 9. CIERRE ===== -->
+        <section class="slide">
+            <span class="eyebrow in">Conclusiones</span>
+            <h2 class="in">Ideas <span class="grad">clave</span></h2>
+            <div class="grid c2 in" style="max-width:820px">
+                <div class="card"><h3>1 · La ruta de datos es el "camino"</h3><p>PC → memoria → decodificación → ALU → memoria/registros. Toda instrucción recorre estas paradas.</p></div>
+                <div class="card"><h3>2 · El pipeline solapa trabajo</h3><p>Divide la ejecución en etapas y procesa varias instrucciones a la vez, como una línea de ensamblaje.</p></div>
+                <div class="card"><h3>3 · Los riesgos frenan</h3><p>Dependencias de datos, saltos y conflictos de recursos generan burbujas que reducen el rendimiento.</p></div>
+                <div class="card"><h3>4 · Optimizar es esconder latencia</h3><p>Forwarding, predicción, superescalar, fuera de orden y cachés mantienen las unidades siempre ocupadas.</p></div>
+            </div>
+            <p class="sub in" style="margin-top:26px">🎉 ¡Gracias! — Usa <kbd>←</kbd> para repasar cualquier animación.</p>
+        </section>
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn" id="btnPrev">← Anterior</button>
+        <div style="display:flex;align-items:center;gap:16px">
+            <div class="dots" id="dots"></div>
+            <div class="counter" id="counter">1 / 9</div>
+        </div>
+        <button class="nav-btn primary" id="btnNext">Siguiente →</button>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            const slides = [...document.querySelectorAll('.slide')];
+            const dots = document.getElementById('dots');
+            const counter = document.getElementById('counter');
+            let cur = 0;
+            let timers = [];
+
+            slides.forEach((_, i) => {
+                const d = document.createElement('div');
+                d.className = 'dot' + (i === 0 ? ' on' : '');
+                d.addEventListener('click', () => go(i));
+                dots.appendChild(d);
+            });
+
+            function clearTimers() { timers.forEach(t => clearInterval(t)); timers.forEach(t => clearTimeout(t)); timers = []; }
+            function later(fn, ms) { const t = setTimeout(fn, ms); timers.push(t); return t; }
+            function every(fn, ms) { const t = setInterval(fn, ms); timers.push(t); return t; }
+
+            function go(n) {
+                if (n < 0 || n >= slides.length) return;
+                clearTimers();
+                slides[cur].classList.remove('active');
+                slides[cur].classList.toggle('prev', n > cur);
+                cur = n;
+                slides.forEach((s, i) => { s.classList.toggle('prev', i < cur); s.classList.toggle('active', i === cur); });
+                dots.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('on', i === cur));
+                counter.textContent = (cur + 1) + ' / ' + slides.length;
+                onEnter(slides[cur].id);
+            }
+
+            document.getElementById('btnPrev').addEventListener('click', () => go(cur - 1));
+            document.getElementById('btnNext').addEventListener('click', () => go(cur + 1));
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); go(cur + 1); }
+                if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); go(cur - 1); }
+                if (e.key === 'Home') go(0);
+                if (e.key === 'End') go(slides.length - 1);
+            });
+
+            /* ================= DATAPATH pulse ================= */
+            // path checkpoints (x positions along y=150), then return wire
+            const dpBoxes = ['dpB1', 'dpB2', 'dpB3', 'dpB4', 'dpB5'];
+            function datapathAnim() {
+                const p1 = document.getElementById('pulse1');
+                const p2 = document.getElementById('pulse2');
+                const pts = [];
+                // forward: x 70 -> 890 at y150
+                for (let x = 70; x <= 890; x += 8) pts.push([x, 150]);
+                // down and back: (890,190)->(890,250)->(60,250)->(60,190)
+                for (let y = 150; y <= 250; y += 8) pts.push([890, y]);
+                for (let x = 890; x >= 60; x -= 12) pts.push([x, 250]);
+                for (let y = 250; y >= 190; y -= 8) pts.push([60, y]);
+                let i = 0;
+                const boxRanges = [[20, 120], [190, 330], [400, 540], [610, 750], [820, 960]];
+                every(() => {
+                    i = (i + 1) % pts.length;
+                    const [x, y] = pts[i];
+                    p1.setAttribute('cx', x); p1.setAttribute('cy', y);
+                    const j = (i + Math.floor(pts.length / 2)) % pts.length;
+                    p2.setAttribute('cx', pts[j][0]); p2.setAttribute('cy', pts[j][1]);
+                    // highlight box under main pulse
+                    dpBoxes.forEach((id, k) => {
+                        const on = y === 150 && x >= boxRanges[k][0] && x <= boxRanges[k][1];
+                        document.getElementById(id).querySelector('rect').classList.toggle('hot', on);
+                    });
+                }, 28);
+            }
+
+            /* ================= CICLO ================= */
+            const cycleData = [
+                ['📥 FETCH', 'El PC apunta a la dirección de la siguiente instrucción. Se lee de la memoria (idealmente de la caché L1) y se carga en el registro de instrucción (IR).'],
+                ['🔍 DECODE', 'La unidad de control interpreta el código de operación, identifica los registros fuente/destino y genera las señales de control para la ruta de datos.'],
+                ['⚙️ EXECUTE', 'La ALU realiza la operación: una suma, una comparación, el cálculo de una dirección de memoria o la resolución de un salto.'],
+                ['💾 WRITE', 'El resultado se escribe en el registro destino o en memoria. El PC se actualiza y el ciclo vuelve a comenzar.']
+            ];
+            function cycleAnim() {
+                const steps = [...document.querySelectorAll('.cycle-step')];
+                const info = document.getElementById('cycleInfo');
+                let i = 0;
+                const paint = () => {
+                    steps.forEach((s, k) => s.classList.toggle('on', k === i));
+                    info.querySelector('h3').textContent = cycleData[i][0];
+                    info.querySelector('p').textContent = cycleData[i][1];
+                };
+                paint();
+                every(() => { i = (i + 1) % 4; paint(); }, 2600);
+            }
+
+            /* ================= PIPELINE helpers ================= */
+            const STAGES = ['IF', 'ID', 'EX', 'MEM', 'WB'];
+
+            function buildTable(el, instrs, nCycles) {
+                let h = '<tr><th></th>';
+                for (let c = 1; c <= nCycles; c++) h += '<th id="' + el.id + 'C' + c + '">C' + c + '</th>';
+                h += '</tr>';
+                instrs.forEach((ins, r) => {
+                    h += '<tr><td class="instr">' + ins + '</td>';
+                    for (let c = 1; c <= nCycles; c++) h += '<td class="cell" id="' + el.id + 'R' + r + 'C' + c + '"></td>';
+                    h += '</tr>';
+                });
+                el.innerHTML = h;
+            }
+
+            function clearCells(el) {
+                el.querySelectorAll('.cell').forEach(c => { c.className = 'cell'; c.textContent = ''; });
+                el.querySelectorAll('th').forEach(t => t.classList.remove('cycle-mark'));
+            }
+
+            // schedule: array per instruction: {cycle -> stage}
+            function animate(el, schedule, nCycles, msgEl, doneMsg) {
+                clearTimers();
+                clearCells(el);
+                let c = 0;
+                every(() => {
+                    c++;
+                    if (c > nCycles) { clearTimers(); if (doneMsg) msgEl.innerHTML = doneMsg; return; }
+                    el.querySelectorAll('th').forEach(t => t.classList.remove('cycle-mark'));
+                    const th = document.getElementById(el.id + 'C' + c);
+                    if (th) th.classList.add('cycle-mark');
+                    schedule.forEach((row, r) => {
+                        const st = row[c];
+                        if (st) {
+                            const cell = document.getElementById(el.id + 'R' + r + 'C' + c);
+                            if (cell) { cell.classList.add('fill', st === '⊘' ? 'BUB' : st); cell.textContent = st === '⊘' ? 'stall' : st; }
+                        }
+                    });
+                    if (msgEl) msgEl.innerHTML = 'Ciclo <b>' + c + '</b> — cada etapa trabaja sobre una instrucción distinta.';
+                }, 750);
+            }
+
+            function idealSchedule(n) {
+                return Array.from({ length: n }, (_, r) => {
+                    const row = {};
+                    STAGES.forEach((s, k) => row[r + k + 1] = s);
+                    return row;
+                });
+            }
+
+            /* ===== slide pipeline ===== */
+            const pipeTable = document.getElementById('pipeTable');
+            const pipeInstrs = ['LOAD R1,[A]', 'ADD R2,R1,R3', 'SUB R4,R5,R6', 'STORE [B],R4', 'BEQ R2,R7,fin'];
+            buildTable(pipeTable, pipeInstrs, 9);
+            document.getElementById('pipePlay').addEventListener('click', () =>
+                animate(pipeTable, idealSchedule(5), 9, document.getElementById('pipeMsg'),
+                    '✅ <b>5 instrucciones en 9 ciclos</b> (sin pipeline serían 25). En régimen estable: 1 instrucción/ciclo.'));
+            document.getElementById('pipeReset').addEventListener('click', () => { clearTimers(); clearCells(pipeTable); });
+
+            /* ===== slide hazards ===== */
+            const hazTable = document.getElementById('hazTable');
+            const hazInstrs = ['ADD R1,R2,R3', 'SUB R4,R1,R5'];
+            buildTable(hazTable, hazInstrs, 9);
+            const hazMsg = document.getElementById('hazMsg');
+
+            document.getElementById('hazStall').addEventListener('click', () => {
+                // I2 must wait until WB of I1 (write in c5, read in c5 possible with split reg file => ID en c5)
+                const sched = [
+                    { 1: 'IF', 2: 'ID', 3: 'EX', 4: 'MEM', 5: 'WB' },
+                    { 2: 'IF', 3: '⊘', 4: '⊘', 5: 'ID', 6: 'EX', 7: 'MEM', 8: 'WB' }
+                ];
+                animate(hazTable, sched, 9, hazMsg,
+                    '🐌 <b>2 burbujas (stalls)</b>: SUB espera a que ADD escriba R1. El pipeline pierde ciclos.');
+            });
+            document.getElementById('hazFwd').addEventListener('click', () => {
+                const sched = [
+                    { 1: 'IF', 2: 'ID', 3: 'EX', 4: 'MEM', 5: 'WB' },
+                    { 2: 'IF', 3: 'ID', 4: 'EX', 5: 'MEM', 6: 'WB' }
+                ];
+                animate(hazTable, sched, 9, hazMsg,
+                    '⚡ <b>Forwarding</b>: el resultado de la ALU (C3) se reenvía directo a la ALU de SUB (C4). <b>Cero stalls.</b>');
+            });
+
+            /* ===== slide performance ===== */
+            function perfAnim() {
+                document.querySelectorAll('#slidePerf .bar-fill').forEach(b => {
+                    b.style.width = '0';
+                    later(() => { b.style.width = b.dataset.w; }, 250);
+                });
+            }
+
+            /* ================= on slide enter ================= */
+            function onEnter(id) {
+                if (id === 'slideDatapath') datapathAnim();
+                if (id === 'slideCycle') cycleAnim();
+                if (id === 'slidePerf') perfAnim();
+                if (id === 'slidePipe') { clearCells(pipeTable); document.getElementById('pipeMsg').innerHTML = 'Pulsa <b>▶ Animar pipeline</b> para ver las 5 instrucciones avanzando.'; }
+                if (id === 'slideHaz') { clearCells(hazTable); hazMsg.textContent = 'Elige un modo para animar el riesgo de datos.'; }
+            }
+
+            onEnter(slides[0].id);
+        })();
+    </script>
+</body>
+
+</html>
