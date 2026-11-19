@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WEBCORE Cloud | VPS Premium</title>
+    <title>WEBCORE Cloud | Simulador de servidores VPS</title>
     <style>
         :root {
             --bg: #f6f8fc;
@@ -7219,16 +7219,17 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="cloud.css">
 </head>
 
 <body>
 
     <div class="noise"></div>
-    <canvas id="particles"></canvas>
+    <canvas id="particles" aria-hidden="true"></canvas>
     <header class="header">
         <div class="container nav">
             <a href="#home" class="brand"><span class="brand-mark"></span><span>WEBCORE</span></a>
-            <nav class="nav-links">
+            <nav class="nav-links" aria-label="Navegación principal">
                 <a class="nav-link active" href="#home" data-i18n="nav.home">Inicio</a>
                 <a class="nav-link" href="#plans" data-i18n="nav.plans">Planes</a>
                 <a class="nav-link" href="#config" data-i18n="nav.config">Configurador</a>
@@ -7238,12 +7239,12 @@
                 <a class="nav-link" href="#nosotros">Nosotros</a>
             </nav>
             <div class="nav-actions">
-                <select class="lang" id="languageSelect">
+                <select class="lang" id="languageSelect" aria-label="Idioma">
                     <option value="es">ES</option>
                     <option value="en">EN</option>
                     <option value="pt">PT</option>
                 </select>
-                <button class="icon-btn" id="themeToggle">☾</button>
+                <button class="icon-btn" id="themeToggle" aria-label="Cambiar tema">☾</button>
                 <!-- Cuando NO hay sesión: muestra Login / Crear cuenta -->
                 <div class="auth-guest" id="authGuest">
                     <button class="btn btn-small" data-modal="login" data-i18n="nav.login">Iniciar sesión</button>
@@ -7272,63 +7273,59 @@
                         </button>
                     </div>
                 </div>
-                <button class="icon-btn mobile-toggle" id="mobileToggle">☰</button>
+                <button class="icon-btn mobile-toggle" id="mobileToggle" type="button" aria-label="Menú de navegación" aria-controls="mobileDrawer" aria-expanded="false">☰</button>
             </div>
         </div>
     </header>
-    <div class="mobile-drawer" id="mobileDrawer">
-        <a class="nav-link" href="#home">Inicio</a>
-        <a class="nav-link" href="#plans">Planes</a>
-        <a class="nav-link" href="#config">Configurador</a>
-        <a class="nav-link" href="#features">Características</a>
-        <a class="nav-link" href="#payments">Pagos</a>
+    <nav class="mobile-drawer" id="mobileDrawer" aria-label="Navegación móvil">
+        <a class="nav-link" href="#home" data-i18n="nav.home">Inicio</a>
+        <a class="nav-link" href="#plans" data-i18n="nav.plans">Planes</a>
+        <a class="nav-link" href="#config" data-i18n="nav.config">Configurador</a>
+        <a class="nav-link" href="#features" data-i18n="nav.features">Características</a>
+        <a class="nav-link" href="#payments" data-i18n="nav.payments">Pagos</a>
+        <a class="nav-link" href="#dashboard" data-i18n="nav.panel">Panel</a>
         <a class="nav-link" href="#nosotros">Nosotros</a>
         <a class="nav-link" href="#mi-cuenta" id="mobileAccountLink" hidden>Mi cuenta</a>
         <div class="auth-guest" id="authGuestMobile">
-            <button class="btn" data-modal="login">Iniciar sesión</button>
-            <button class="btn btn-primary" data-modal="register">Crear cuenta</button>
+            <button class="btn" data-modal="login" data-i18n="nav.login">Iniciar sesión</button>
+            <button class="btn btn-primary" data-modal="register" data-i18n="nav.register">Crear cuenta</button>
         </div>
         <div class="auth-user" id="authUserMobile" hidden>
             <button class="btn btn-danger" id="logoutBtnMobile">Cerrar sesión</button>
         </div>
-    </div>
+    </nav>
     <main>
         <section class="hero" id="home">
             <div class="container hero-grid">
                 <div class="hero-copy reveal">
-                    <span class="eyebrow" data-i18n="hero.eyebrow">VPS Cloud premium en segundos</span>
-                    <h1><span data-i18n="hero.titleA">Infraestructura cloud</span> <span class="gradient-text"
-                            data-i18n="hero.titleB">rápida, segura y escalable</span></h1>
-                    <p data-i18n="hero.desc">Despliega servidores VPS con facturación por horas, panel de
-                        administración, backups, snapshots, pagos integrados y soporte multi-idioma para equipos
-                        modernos.</p>
-                    <div class="hero-actions"><a class="btn btn-primary" href="#config" data-i18n="hero.cta1">Configurar
-                            servidor</a><button class="btn" data-modal="admin" data-i18n="hero.cta2">Ver panel
-                            admin</button></div>
-                    <div class="proofs"><span>99.99% uptime</span><span>Backups automáticos</span><span>Pagos
-                            seguros</span></div>
+                    <span class="eyebrow" data-i18n="hero.eyebrow">Laboratorio cloud · Proyecto académico</span>
+                    <h1><span data-i18n="hero.titleA">Diseña tu</span> <span class="gradient-text" data-i18n="hero.titleB">servidor cloud.</span></h1>
+                    <p data-i18n="hero.desc">Elige CPU, memoria y almacenamiento, calcula el costo y explora cómo se administra un servidor VPS.</p>
+                    <div class="hero-actions">
+                        <a class="btn btn-primary" href="#config" data-i18n="hero.cta1">Configurar servidor</a>
+                        <a class="btn" href="#plans" data-i18n="hero.cta2">Comparar planes</a>
+                    </div>
+                    <p class="demo-note" data-i18n="hero.note">Modo demo: no crea servidores ni realiza cobros.</p>
                 </div>
-                <div class="hero-visual reveal">
-                    <div class="orbit"></div>
-                    <div class="orbit two"></div>
-                    <div class="console glass tilt">
-                        <div class="console-top">
-                            <div><strong>WEBCORE Console</strong><small>cluster-lima-01</small></div><span
-                                class="online">Online</span>
+                <div class="cloud-preview">
+                    <div class="preview-header">
+                        <span><span class="preview-dot" aria-hidden="true"></span> WEBCORE / CONSOLE</span>
+                        <span class="preview-tag">DEMO</span>
+                    </div>
+                    <div class="preview-content">
+                        <div class="preview-kicker" data-i18n="hero.instance">INSTANCIA DE EJEMPLO</div>
+                        <strong class="preview-name">lima-vps-01</strong>
+                        <div class="preview-chart" aria-hidden="true">
+                            <svg viewBox="0 0 420 100" preserveAspectRatio="none" focusable="false">
+                                <path d="M0 82 L35 75 L63 80 L105 50 L138 59 L166 42 L204 55 L244 30 L271 38 L318 18 L352 30 L389 12 L420 19 L420 100 H0 Z" fill="#60a5fa" fill-opacity=".13"/>
+                                <path d="M0 82 L35 75 L63 80 L105 50 L138 59 L166 42 L204 55 L244 30 L271 38 L318 18 L352 30 L389 12 L420 19" fill="none" stroke="#8bc8ff" stroke-width="2" vector-effect="non-scaling-stroke"/>
+                            </svg>
                         </div>
-                        <div class="server-row"><span class="idx">01</span><span
-                                class="lines"><i></i><i></i></span><span class="chip">4 GB RAM</span></div>
-                        <div class="server-row"><span class="idx">02</span><span
-                                class="lines"><i></i><i></i></span><span class="chip">2 vCPU</span></div>
-                        <div class="server-row"><span class="idx">03</span><span
-                                class="lines"><i></i><i></i></span><span class="chip">80 GB NVMe</span></div>
-                        <div class="server-row"><span class="idx">04</span><span
-                                class="lines"><i></i><i></i></span><span class="chip">API Ready</span></div>
-                    </div>
-                    <div class="float-card float-a glass"><strong>$0.004/h</strong><small>desde $3/mes</small></div>
-                    <div class="float-card float-b glass"><strong>99.99%</strong><small>alta disponibilidad</small>
-                    </div>
-                    <div class="float-card float-c glass"><strong>4 TB</strong><small>transferencia incluida</small>
+                        <dl class="preview-specs">
+                            <div><dt>CPU</dt><dd>2 vCPU</dd></div>
+                            <div><dt>RAM</dt><dd>4 GB</dd></div>
+                            <div><dt>NVMe</dt><dd>60 GB</dd></div>
+                        </dl>
                     </div>
                 </div>
             </div>
@@ -7764,12 +7761,12 @@
                         pipeline y técnicas de optimización.</p>
                 </div>
                 <div class="glass reveal" style="border-radius:22px;overflow:hidden;padding:0;border:1px solid var(--line)">
-                    <iframe data-src="procesador.html" title="Presentación: El Procesador"
+                    <iframe data-src="Procesador.html" title="Presentación: El Procesador"
                         style="display:block;width:100%;height:640px;border:0;background:#070b14"
                         loading="lazy"></iframe>
                 </div>
                 <div class="reveal" style="display:flex;justify-content:center;gap:14px;margin-top:18px">
-                    <a class="btn btn-primary" href="procesador.html" target="_blank" rel="noopener">Abrir presentación
+                    <a class="btn btn-primary" href="Procesador.html" target="_blank" rel="noopener">Abrir presentación
                         en pantalla completa ↗</a>
                 </div>
                 <p class="section-desc reveal" style="text-align:center;margin-top:12px;font-size:13px">
@@ -8121,9 +8118,9 @@
         const pwdMatch = (stored, plain) => stored === hashPwd(plain) || stored === plain; // compat con cuentas antiguas
 
         const dict = {
-            es: { 'nav.home': 'Inicio', 'nav.plans': 'Planes', 'nav.config': 'Configurador', 'nav.features': 'Características', 'nav.payments': 'Pagos', 'nav.panel': 'Panel', 'nav.login': 'Iniciar sesión', 'nav.register': 'Crear cuenta', 'hero.eyebrow': 'VPS Cloud premium en segundos', 'hero.titleA': 'Infraestructura cloud', 'hero.titleB': 'rápida, segura y escalable', 'hero.desc': 'Despliega servidores VPS con facturación por horas, panel de administración, backups, snapshots, pagos integrados y soporte multi-idioma para equipos modernos.', 'hero.cta1': 'Configurar servidor', 'hero.cta2': 'Ver panel admin' },
-            en: { 'nav.home': 'Home', 'nav.plans': 'Plans', 'nav.config': 'Configurator', 'nav.features': 'Features', 'nav.payments': 'Payments', 'nav.panel': 'Panel', 'nav.login': 'Sign in', 'nav.register': 'Create account', 'hero.eyebrow': 'Premium Cloud VPS in seconds', 'hero.titleA': 'Cloud infrastructure', 'hero.titleB': 'fast, secure and scalable', 'hero.desc': 'Deploy VPS servers with hourly billing, admin panel, backups, snapshots, payments and multi-language support for modern teams.', 'hero.cta1': 'Configure server', 'hero.cta2': 'View admin panel' },
-            pt: { 'nav.home': 'Início', 'nav.plans': 'Planos', 'nav.config': 'Configurador', 'nav.features': 'Recursos', 'nav.payments': 'Pagamentos', 'nav.panel': 'Painel', 'nav.login': 'Entrar', 'nav.register': 'Criar conta', 'hero.eyebrow': 'VPS Cloud premium em segundos', 'hero.titleA': 'Infraestrutura cloud', 'hero.titleB': 'rápida, segura e escalável', 'hero.desc': 'Implante servidores VPS com cobrança por hora, painel admin, backups, snapshots, pagamentos e suporte multi-idioma.', 'hero.cta1': 'Configurar servidor', 'hero.cta2': 'Ver painel admin' }
+            es: { 'nav.home': 'Inicio', 'nav.plans': 'Planes', 'nav.config': 'Configurador', 'nav.features': 'Características', 'nav.payments': 'Pagos', 'nav.panel': 'Panel', 'nav.login': 'Iniciar sesión', 'nav.register': 'Crear cuenta', 'hero.eyebrow': 'Laboratorio cloud · Proyecto académico', 'hero.titleA': 'Diseña tu', 'hero.titleB': 'servidor cloud.', 'hero.desc': 'Elige CPU, memoria y almacenamiento, calcula el costo y explora cómo se administra un servidor VPS.', 'hero.cta1': 'Configurar servidor', 'hero.cta2': 'Comparar planes', 'hero.note': 'Modo demo: no crea servidores ni realiza cobros.', 'hero.instance': 'INSTANCIA DE EJEMPLO' },
+            en: { 'nav.home': 'Home', 'nav.plans': 'Plans', 'nav.config': 'Configurator', 'nav.features': 'Features', 'nav.payments': 'Payments', 'nav.panel': 'Panel', 'nav.login': 'Sign in', 'nav.register': 'Create account', 'hero.eyebrow': 'Cloud lab · Academic project', 'hero.titleA': 'Design your', 'hero.titleB': 'cloud server.', 'hero.desc': 'Choose CPU, memory, and storage, estimate the cost, and explore how to manage a VPS.', 'hero.cta1': 'Configure server', 'hero.cta2': 'Compare plans', 'hero.note': 'Demo mode: no servers are created and no payments are taken.', 'hero.instance': 'EXAMPLE INSTANCE' },
+            pt: { 'nav.home': 'Início', 'nav.plans': 'Planos', 'nav.config': 'Configurador', 'nav.features': 'Recursos', 'nav.payments': 'Pagamentos', 'nav.panel': 'Painel', 'nav.login': 'Entrar', 'nav.register': 'Criar conta', 'hero.eyebrow': 'Laboratório cloud · Projeto acadêmico', 'hero.titleA': 'Projete seu', 'hero.titleB': 'servidor cloud.', 'hero.desc': 'Escolha CPU, memória e armazenamento, estime o custo e explore como administrar um VPS.', 'hero.cta1': 'Configurar servidor', 'hero.cta2': 'Comparar planos', 'hero.note': 'Modo demo: não cria servidores nem realiza cobranças.', 'hero.instance': 'INSTÂNCIA DE EXEMPLO' }
         };
 
         const state = {
@@ -8432,8 +8429,24 @@
         document.documentElement.dataset.theme = store.get('wc_theme', 'light');
 
         // Móvil
-        $('#mobileToggle').addEventListener('click', () => $('#mobileDrawer').classList.toggle('open'));
-        $$('#mobileDrawer a').forEach(a => a.addEventListener('click', () => $('#mobileDrawer').classList.remove('open')));
+        const mobileToggle = $('#mobileToggle');
+        const mobileDrawer = $('#mobileDrawer');
+        function setDrawer(open) {
+            mobileDrawer.classList.toggle('open', open);
+            mobileToggle.setAttribute('aria-expanded', String(open));
+            mobileToggle.textContent = open ? '×' : '☰';
+        }
+        mobileToggle.addEventListener('click', () => setDrawer(!mobileDrawer.classList.contains('open')));
+        mobileDrawer.addEventListener('click', e => {
+            if (e.target.closest('a, button')) setDrawer(false);
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && mobileDrawer.classList.contains('open')) {
+                setDrawer(false);
+                mobileToggle.focus();
+            }
+        });
+        matchMedia('(max-width: 1120px)').addEventListener('change', () => setDrawer(false));
 
         // Idioma
         const langSel = $('#languageSelect');
@@ -8896,7 +8909,7 @@
             }
             requestAnimationFrame(draw);
         }
-        draw();
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) draw();
 
         // Init
         calc();
